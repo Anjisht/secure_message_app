@@ -73,7 +73,7 @@ fun ConversationScreen(viewModel: ChatViewModel) {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-//        contentWindowInsets = WindowInsets.safeDrawing, // ✅ keeps top bar visible
+        contentWindowInsets = WindowInsets.safeDrawing, // ✅ keeps top bar visible
         topBar = {
             TopAppBar(
                 title = {

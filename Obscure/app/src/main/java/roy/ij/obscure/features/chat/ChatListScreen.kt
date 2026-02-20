@@ -21,6 +21,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -285,7 +286,7 @@ private fun RoomRow(
                 Icon(
                     Icons.Default.Info,
                     contentDescription = "Room profile",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = Color.Black
                 )
             }
         }

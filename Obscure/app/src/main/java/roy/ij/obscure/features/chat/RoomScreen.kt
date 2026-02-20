@@ -24,7 +24,7 @@ fun RoomScreen(
     var roomId by remember { mutableStateOf("") }
     var joinCode by remember { mutableStateOf("") }   // <-- NEW
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
+    Column(Modifier.fillMaxSize().padding(16.dp).safeContentPadding()) {
         Text("Create Room")
         OutlinedTextField(value = code, onValueChange = { code = it }, label = { Text("Code phrase (optional)") })
         OutlinedTextField(value = duration, onValueChange = { duration = it }, label = { Text("Duration minutes") })

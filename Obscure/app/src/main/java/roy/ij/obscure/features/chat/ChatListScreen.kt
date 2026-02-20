@@ -189,17 +189,17 @@ fun ChatListScreen(
                     }
                     Spacer(Modifier.height(8.dp))
 
-                    SmallFab("Create Room") {
+                    SmallFab("Create / Join Room") {
                         fabExpanded = false
                         navController.navigate(NavRoutes.Room.route)
                     }
                     Spacer(Modifier.height(8.dp))
-
-                    SmallFab("Join Room") {
-                        fabExpanded = false
-                        navController.navigate(NavRoutes.Room.route)
-                    }
-                    Spacer(Modifier.height(8.dp))
+//
+//                    SmallFab("Join Room") {
+//                        fabExpanded = false
+//                        navController.navigate(NavRoutes.Room.route)
+//                    }
+//                    Spacer(Modifier.height(8.dp))
                 }
 
                 FloatingActionButton(

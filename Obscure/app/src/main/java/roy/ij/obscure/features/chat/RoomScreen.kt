@@ -52,7 +52,10 @@ fun RoomScreen(
     }
     LaunchedEffect(state.roomId) {
         state.roomId?.let { id ->
-            navController.navigate(NavRoutes.Conversation.create(id))
+            navController.navigate(NavRoutes.Conversation.create(id)) {
+                popUpTo(NavRoutes.Room.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
 }

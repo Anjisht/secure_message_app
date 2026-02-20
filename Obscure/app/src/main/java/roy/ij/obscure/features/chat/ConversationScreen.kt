@@ -27,10 +27,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.DisposableEffect
 import roy.ij.obscure.util.CurrentChat
-import roy.ij.obscure.features.chat.MsgType
 import coil.compose.rememberAsyncImagePainter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,14 +54,31 @@ fun ConversationScreen(viewModel: ChatViewModel) {
         uri?.let { viewModel.sendMedia(it) }
     }
 
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(ui.messages.size) {
+        if (ui.messages.isNotEmpty()) {
+            listState.animateScrollToItem(ui.messages.lastIndex)
+        }
+    }
+
+    // 👇 Determine chat type
+    val otherPersonName = remember(ui.messages) {
+        ui.messages.firstOrNull { !it.mine }?.alias ?: "Conversation"
+    }
+
+    val isGroupChat = remember(ui.messages) {
+        ui.messages.map { it.alias }.distinct().size > 2
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+//        contentWindowInsets = WindowInsets.safeDrawing, // ✅ keeps top bar visible
         topBar = {
             TopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
 
-                        // Avatar Placeholder
                         Box(
                             modifier = Modifier
                                 .size(36.dp)
@@ -70,8 +87,7 @@ fun ConversationScreen(viewModel: ChatViewModel) {
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = ui.messages.firstOrNull()?.alias?.take(1)
-                                    ?: "?",
+                                text = otherPersonName.take(1),
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
@@ -79,8 +95,7 @@ fun ConversationScreen(viewModel: ChatViewModel) {
                         Spacer(Modifier.width(12.dp))
 
                         Text(
-                            text = ui.messages.firstOrNull()?.alias
-                                ?: "Conversation",
+                            text = otherPersonName,
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
@@ -114,21 +129,20 @@ fun ConversationScreen(viewModel: ChatViewModel) {
                 )
             }
 
-            val listState = rememberLazyListState()
-
-            LaunchedEffect(ui.messages.size) {
-                if (ui.messages.isNotEmpty()) {
-                    listState.animateScrollToItem(ui.messages.lastIndex)
-                }
-            }
-
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 state = listState,
                 contentPadding = PaddingValues(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(ui.messages) { m ->
+
+                itemsIndexed(ui.messages) { index, m ->
+
+                    val previous = ui.messages.getOrNull(index - 1)
+                    val showSenderName =
+                        isGroupChat &&
+                                !m.mine &&
+                                (previous == null || previous.alias != m.alias)
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -141,7 +155,8 @@ fun ConversationScreen(viewModel: ChatViewModel) {
                                 if (m.mine) Alignment.End else Alignment.Start
                         ) {
 
-                            if (!m.mine) {
+                            // ✅ Only show sender name in GROUP chats
+                            if (showSenderName) {
                                 Text(
                                     text = m.alias,
                                     style = MaterialTheme.typography.labelSmall,
@@ -202,6 +217,7 @@ fun ConversationScreen(viewModel: ChatViewModel) {
                 Row(
                     Modifier
                         .fillMaxWidth()
+//                        .imePadding() // ✅ pushes input above keyboard
                         .padding(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {

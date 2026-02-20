@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import org.json.JSONObject
 import retrofit2.HttpException
 import roy.ij.obscure.data.network.RetrofitClient
+import roy.ij.obscure.security.SecureStore
 
 
 data class AuthState(
@@ -105,10 +106,16 @@ class AuthViewModel(
 
     fun onAuthSuccess(ctx: Context, username: String, token: String) {
         // Save locally
-        roy.ij.obscure.security.SecureStore.saveUsername(ctx, username)
+        SecureStore.saveUsername(ctx, username)
+
+        SecureStore.saveTokenBlob(ctx, token)
 
         // Token will be stored encrypted later if user enables biometric
         _state.value = _state.value.copy(token = token)
     }
 
+    fun restoreSession(token: String) {
+        roy.ij.obscure.data.AuthSession.onLogin(token)
+        _state.value = _state.value.copy(token = token)
+    }
 }

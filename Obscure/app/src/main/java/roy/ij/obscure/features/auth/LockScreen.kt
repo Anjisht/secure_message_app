@@ -70,7 +70,7 @@ fun LockScreen(
             promptToDecryptAndUnlock(activity, blob) { tokenOrNull ->
                 if (tokenOrNull != null) {
                     // Set token into VM and go
-                    viewModel.onAuthSuccess(ctx, username, tokenOrNull)
+                    viewModel.restoreSession(tokenOrNull)
                     navController.navigate(NavRoutes.ChatList.route) {
                         popUpTo(NavRoutes.Lock.route) { inclusive = true }
                         launchSingleTop = true
@@ -171,7 +171,7 @@ fun LockScreen(
                             } else {
                                 promptToDecryptAndUnlock(activity, blob) { tokenOrNull ->
                                     if (tokenOrNull != null) {
-                                        viewModel.onAuthSuccess(ctx, username, tokenOrNull)
+                                        viewModel.restoreSession(tokenOrNull)
                                         navController.navigate(NavRoutes.ChatList.route) {
                                             popUpTo(NavRoutes.Lock.route) { inclusive = true }
                                             launchSingleTop = true

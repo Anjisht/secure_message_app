@@ -38,6 +38,8 @@ import roy.ij.obscure.navigation.NavRoutes
 import roy.ij.obscure.security.SecureStore
 import roy.ij.obscure.ui.theme.BaatCheetTheme
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 class MainActivity : FragmentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -59,6 +61,7 @@ class MainActivity : FragmentActivity() {
                     when {
                         storedUsername.isNullOrBlank() -> NavRoutes.Auth.route
                         bioEnabled && hasBlob -> NavRoutes.Lock.route
+                        hasBlob -> NavRoutes.ChatList.route
                         else -> NavRoutes.Auth.route
                     }
                 }
@@ -66,65 +69,70 @@ class MainActivity : FragmentActivity() {
                 // Single shared VM for auth flow
                 val authViewModel: AuthViewModel = viewModel()
                 val authState by authViewModel.state.collectAsState()
+
                 // if app opened from notification
                 val startRoomId = intent?.getStringExtra("roomId")
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
-                    NavHost(navController, startDestination) {
-                        composable(NavRoutes.Auth.route) {
-                            // Pass the same VM to keep state across recompositions
-                            AuthScreen(viewModel = authViewModel, navController = navController)
-                        }
-                        composable(NavRoutes.ChatList.route) {
-                            val token = authState.token ?: return@composable
-                            ChatListScreen(navController = navController, token = token)
-                        }
-                        composable(NavRoutes.Room.route) {
-                            // Provide token to RoomViewModel
-                            val roomVm: RoomViewModel = viewModel()
-                            LaunchedEffect(authState.token) {
-                                authState.token?.let { roomVm.setToken(it) }
+                        NavHost(navController, startDestination) {
+                            composable(NavRoutes.Auth.route) {
+                                // Pass the same VM to keep state across recompositions
+                                AuthScreen(viewModel = authViewModel, navController = navController)
                             }
-                            RoomScreen(navController = navController, viewModel = roomVm)
-                        }
-                        composable(
-                            NavRoutes.Conversation.route,
-                            arguments = listOf(navArgument("roomId") { type = NavType.StringType })
-                        ) { backStackEntry ->
-                            val roomId = backStackEntry.arguments?.getString("roomId") ?: return@composable
-
-                            // build ChatViewModel with token + roomId
-                            val token = authState.token ?: return@composable
-                            val chatVm = remember(roomId, token) {
-                                ChatViewModel(token = token, roomId = roomId)
+                            composable(NavRoutes.ChatList.route) {
+                                val token = authState.token ?: return@composable
+                                ChatListScreen(navController = navController, token = token)
                             }
-                            ConversationScreen(viewModel = chatVm)
-                        }
-                        composable(NavRoutes.MyQr.route) {
-                            val token = authState.token ?: return@composable
-                            val vm: MyProfileQrViewModel = viewModel()
-                            val user by vm.user.collectAsState()
-
-                            LaunchedEffect(Unit) { vm.load(token) }
-
-                            user?.let {
-                                MyProfileQrScreen(username = it.username, userId = it.id)
-                            } ?: run {
-                                LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
+                            composable(NavRoutes.Room.route) {
+                                // Provide token to RoomViewModel
+                                val roomVm: RoomViewModel = viewModel()
+                                LaunchedEffect(authState.token) {
+                                    authState.token?.let { roomVm.setToken(it) }
+                                }
+                                RoomScreen(navController = navController, viewModel = roomVm)
                             }
-                        }
+                            composable(
+                                NavRoutes.Conversation.route,
+                                arguments = listOf(navArgument("roomId") {
+                                    type = NavType.StringType
+                                })
+                            ) { backStackEntry ->
+                                val roomId = backStackEntry.arguments?.getString("roomId")
+                                    ?: return@composable
 
-                        composable(NavRoutes.ScanOrType.route) {
-                            val token = authState.token ?: return@composable
-                            ScanOrTypeScreen(token = token) { roomId ->
-                                // on success -> go to DM conversation
-                                navController.navigate(NavRoutes.Conversation.create(roomId)) {
-                                    launchSingleTop = true
+                                // build ChatViewModel with token + roomId
+                                val token = authState.token ?: return@composable
+                                val chatVm = remember(roomId, token) {
+                                    ChatViewModel(token = token, roomId = roomId)
+                                }
+                                ConversationScreen(viewModel = chatVm)
+                            }
+                            composable(NavRoutes.MyQr.route) {
+                                val token = authState.token ?: return@composable
+                                val vm: MyProfileQrViewModel = viewModel()
+                                val user by vm.user.collectAsState()
+
+                                LaunchedEffect(Unit) { vm.load(token) }
+
+                                user?.let {
+                                    MyProfileQrScreen(username = it.username, userId = it.id)
+                                } ?: run {
+                                    LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
                                 }
                             }
-                        }
-                        composable(NavRoutes.Lock.route) {
-                            LockScreen(navController = navController, viewModel = authViewModel)
+
+                            composable(NavRoutes.ScanOrType.route) {
+                                val token = authState.token ?: return@composable
+                                ScanOrTypeScreen(token = token) { roomId ->
+                                    // on success -> go to DM conversation
+                                    navController.navigate(NavRoutes.Conversation.create(roomId)) {
+                                        launchSingleTop = true
+                                    }
+                                }
+                            }
+                            composable(NavRoutes.Lock.route) {
+                                LockScreen(navController = navController, viewModel = authViewModel)
+                            }
                         }
                     }
                     // 🔗 Deep-link navigation when opened from notification
@@ -138,7 +146,6 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
-    }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent) // so Compose can read the new roomId extra

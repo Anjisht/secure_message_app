@@ -1,5 +1,6 @@
 package roy.ij.obscure.features.chat
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,8 +51,10 @@ class RoomViewModel(
     fun createRoom(code: String?, duration: Int?) {
         val bearer = "Bearer ${roy.ij.obscure.data.AuthSession.token ?: return}"
         _state.value = RoomState(isLoading = true)
+        Log.d("RoomViewModel", "ABCDEFG Creating room with code $code and duration $duration")
         viewModelScope.launch {
             try {
+                Log.d("RoomViewModel", "ABCD Creating room with code $code and duration $duration")
                 val resp = api.createRoom(bearer, CreateRoomReq(code, duration))
                 _state.value = RoomState(
                     isLoading = false,

@@ -16,6 +16,7 @@ import roy.ij.obscure.data.network.DmStartReq
 import roy.ij.obscure.data.network.RetrofitClient
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivity
+import kotlinx.coroutines.DelicateCoroutinesApi
 
 @Composable
 fun ScanOrTypeScreen(
@@ -78,6 +79,7 @@ fun ScanOrTypeScreen(
     }
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private fun startDm(
     api: ApiService,
     token: String,

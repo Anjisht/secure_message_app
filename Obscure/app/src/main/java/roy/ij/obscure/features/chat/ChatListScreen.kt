@@ -20,7 +20,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.compose.material.icons.filled.MoreVert
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatListScreen(
     navController: NavController,
@@ -57,124 +59,166 @@ fun ChatListScreen(
 
     var fabExpanded by remember { mutableStateOf(false) }
 
-    Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Obscure",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                },
+                actions = {
+                    var expanded by remember { mutableStateOf(false) }
 
-        if (rooms.isEmpty()) {
-
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "No conversations yet",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Start a room or scan someone’s QR to begin.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-            }
-
-        } else {
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 24.dp,
-                    bottom = 120.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(rooms) { room ->
-                    val roomId = room["roomId"] as String
-                    val members = room["members"] as List<Map<String, Any>>
-                    val isDm = (room["type"] as? String) == "dm"
-
-                    val me = members.find { it["userId"] == myUserId }
-                    val amApproved = me?.get("status") == "approved"
-
-                    val displayName = if (isDm) {
-                        val other = members.find { it["userId"] != myUserId }
-                        other?.get("username") as? String
-                            ?: other?.get("alias") as? String
-                            ?: "Unknown User"
-                    } else {
-                        "Room • $roomId"
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "More options"
+                        )
                     }
 
-                    RoomRow(
-                        roomId = roomId,
-                        isApproved = amApproved,
-                        isDm = isDm,
-                        displayName = displayName,
-                        onOpen = {
-                            navController.navigate(
-                                NavRoutes.Conversation.create(roomId)
-                            )
-                        },
-                        onOpenProfile = {
-                            profileRoomId = roomId
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Logout") },
+                            onClick = {
+                                expanded = false
+                                // Later: add logout logic here
+                            }
+                        )
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+
+            if (rooms.isEmpty()) {
+
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "No conversations yet",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Start a room or scan someone’s QR to begin.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                }
+
+            } else {
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 24.dp,
+                        bottom = 120.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(rooms) { room ->
+                        val roomId = room["roomId"] as String
+                        val members = room["members"] as List<Map<String, Any>>
+                        val isDm = (room["type"] as? String) == "dm"
+
+                        val me = members.find { it["userId"] == myUserId }
+                        val amApproved = me?.get("status") == "approved"
+
+                        val displayName = if (isDm) {
+                            val other = members.find { it["userId"] != myUserId }
+                            other?.get("username") as? String
+                                ?: other?.get("alias") as? String
+                                ?: "Unknown User"
+                        } else {
+                            "Room • $roomId"
                         }
+
+                        RoomRow(
+                            roomId = roomId,
+                            isApproved = amApproved,
+                            isDm = isDm,
+                            displayName = displayName,
+                            onOpen = {
+                                navController.navigate(
+                                    NavRoutes.Conversation.create(roomId)
+                                )
+                            },
+                            onOpenProfile = {
+                                profileRoomId = roomId
+                            }
+                        )
+                    }
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                if (fabExpanded) {
+                    SmallFab("Show My QR") {
+                        fabExpanded = false
+                        navController.navigate(NavRoutes.MyQr.route)
+                    }
+                    Spacer(Modifier.height(8.dp))
+
+                    SmallFab("Scan / Type Username") {
+                        fabExpanded = false
+                        navController.navigate(NavRoutes.ScanOrType.route)
+                    }
+                    Spacer(Modifier.height(8.dp))
+
+                    SmallFab("Create Room") {
+                        fabExpanded = false
+                        navController.navigate(NavRoutes.Room.route)
+                    }
+                    Spacer(Modifier.height(8.dp))
+
+                    SmallFab("Join Room") {
+                        fabExpanded = false
+                        navController.navigate(NavRoutes.Room.route)
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
+                FloatingActionButton(
+                    onClick = { fabExpanded = !fabExpanded },
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Text(
+                        text = if (fabExpanded) "×" else "+",
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }
-        }
 
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.End
-        ) {
-            if (fabExpanded) {
-                SmallFab("Show My QR") {
-                    fabExpanded = false
-                    navController.navigate(NavRoutes.MyQr.route)
-                }
-                Spacer(Modifier.height(8.dp))
-
-                SmallFab("Scan / Type Username") {
-                    fabExpanded = false
-                    navController.navigate(NavRoutes.ScanOrType.route)
-                }
-                Spacer(Modifier.height(8.dp))
-
-                SmallFab("Create Room") {
-                    fabExpanded = false
-                    navController.navigate(NavRoutes.Room.route)
-                }
-                Spacer(Modifier.height(8.dp))
-
-                SmallFab("Join Room") {
-                    fabExpanded = false
-                    navController.navigate(NavRoutes.Room.route)
-                }
-                Spacer(Modifier.height(8.dp))
-            }
-
-            FloatingActionButton(
-                onClick = { fabExpanded = !fabExpanded },
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Text(
-                    text = if (fabExpanded) "×" else "+",
-                    color = MaterialTheme.colorScheme.onPrimary
+            if (profileRoomId != null) {
+                RoomDetailsSheet(
+                    roomId = profileRoomId!!,
+                    vm = roomVm,
+                    onClose = { profileRoomId = null }
                 )
             }
-        }
-
-        if (profileRoomId != null) {
-            RoomDetailsSheet(
-                roomId = profileRoomId!!,
-                vm = roomVm,
-                onClose = { profileRoomId = null }
-            )
         }
     }
 }

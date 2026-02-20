@@ -14,6 +14,8 @@ import org.json.JSONObject
 import roy.ij.obscure.data.network.ApiService
 import roy.ij.obscure.data.network.DmStartReq
 import roy.ij.obscure.data.network.RetrofitClient
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivity
 
 @Composable
 fun ScanOrTypeScreen(
@@ -22,7 +24,7 @@ fun ScanOrTypeScreen(
 ) {
     var username by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
-    val context = androidx.compose.ui.platform.LocalContext.current as Activity
+    val activity = LocalActivity.current
     val api = remember { RetrofitClient.api }
 
     val scanner = rememberLauncherForActivityResult(
@@ -61,7 +63,7 @@ fun ScanOrTypeScreen(
         Divider()
         Spacer(Modifier.height(24.dp))
         Button(onClick = {
-            val integrator = IntentIntegrator(context).apply {
+            val integrator = IntentIntegrator(activity).apply {
                 setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
                 setPrompt("Scan user's QR")
                 setBeepEnabled(false)

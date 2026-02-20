@@ -57,7 +57,7 @@ fun ChatListScreen(
 
     var fabExpanded by remember { mutableStateOf(false) }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().safeDrawingPadding()) {
 
         if (rooms.isEmpty()) {
 

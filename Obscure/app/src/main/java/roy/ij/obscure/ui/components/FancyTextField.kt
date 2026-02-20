@@ -57,17 +57,17 @@ fun FancyTextField(
                         Icon(
                             if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
                 unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                 else MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
-                cursorColor = MaterialTheme.colorScheme.primary,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                cursorColor = MaterialTheme.colorScheme.secondary,
+                focusedLabelColor = MaterialTheme.colorScheme.secondary,
                 unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 focusedTextColor = MaterialTheme.colorScheme.onSurface,
                 unfocusedTextColor = MaterialTheme.colorScheme.onSurface

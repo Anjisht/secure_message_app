@@ -78,8 +78,8 @@ fun AuthScreen(
                 .background(
                     Brush.linearGradient(
                         listOf(
-                            MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.secondary
+                            MaterialTheme.colorScheme.secondary,
+                            MaterialTheme.colorScheme.primary
                         ),
                         start = Offset(bgShift, 0f),
                         end = Offset(bgShift + 1000f, 1000f)
@@ -190,14 +190,25 @@ fun AuthScreen(
                             enabled = username.isNotBlank() && password.length >= 10,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
-                        ) {
+                                .height(52.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary,
+                                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                                    disabledContainerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                                )
+                            ) {
                             Text(if (isLogin) "Continue" else "Sign Up")
                             Spacer(Modifier.width(8.dp))
                             Icon(Icons.Default.ArrowForward, contentDescription = null)
                         }
 
-                        TextButton(onClick = { isLogin = !isLogin }) {
+                        TextButton(
+                            onClick = { isLogin = !isLogin },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.secondary
+                            ))
+                        {
+
                             Text(
                                 if (isLogin)
                                     "Don’t have an account? Register"

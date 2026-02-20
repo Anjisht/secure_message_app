@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import roy.ij.obscure.navigation.NavRoutes
-import android.app.Activity
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,7 +28,6 @@ fun ChatListScreen(
 ) {
     val vm: ChatListViewModel = viewModel()
 
-    // 🔔 Request POST_NOTIFICATIONS permission on Android 13+
     if (Build.VERSION.SDK_INT >= 33) {
         val ctx = LocalContext.current
         val granted = ContextCompat.checkSelfPermission(
@@ -40,7 +38,7 @@ fun ChatListScreen(
         if (!granted) {
             val launcher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestPermission()
-            ) { /* no-op, we just need to request once */ }
+            ) {}
 
             LaunchedEffect(Unit) {
                 launcher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
@@ -57,50 +55,77 @@ fun ChatListScreen(
     val roomVm: RoomViewModel = viewModel()
     LaunchedEffect(token) { roomVm.setToken(token) }
 
-
-
     var fabExpanded by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize()) {
 
-        // 🔹 Rooms list
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
-            items(rooms) { room ->
-                val roomId = room["roomId"] as String
-                val members = room["members"] as List<Map<String, Any>>
-                val isDm = (room["type"] as? String) == "dm"
+        if (rooms.isEmpty()) {
 
-                val me = members.find { it["userId"] == myUserId }
-                val amApproved = me?.get("status") == "approved"
-
-                // 🧠 For DMs, show the *other person’s* alias or username
-                val displayName = if (isDm) {
-                    val other = members.find { it["userId"] != myUserId }
-                    other?.get("username") as? String ?: other?.get("alias") as? String ?: "Unknown User"
-                } else {
-                    "Room • $roomId"
-                }
-
-                RoomRow(
-                    roomId = roomId,
-                    isApproved = amApproved,
-                    isDm = isDm,
-                    displayName = displayName,   // 👈 added this
-                    onOpen = {
-                        navController.navigate(NavRoutes.Conversation.create(roomId))
-                    },
-                    onOpenProfile = {
-                        profileRoomId = roomId
-                    }
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "No conversations yet",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Start a room or scan someone’s QR to begin.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+
+        } else {
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 24.dp,
+                    bottom = 120.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(rooms) { room ->
+                    val roomId = room["roomId"] as String
+                    val members = room["members"] as List<Map<String, Any>>
+                    val isDm = (room["type"] as? String) == "dm"
+
+                    val me = members.find { it["userId"] == myUserId }
+                    val amApproved = me?.get("status") == "approved"
+
+                    val displayName = if (isDm) {
+                        val other = members.find { it["userId"] != myUserId }
+                        other?.get("username") as? String
+                            ?: other?.get("alias") as? String
+                            ?: "Unknown User"
+                    } else {
+                        "Room • $roomId"
+                    }
+
+                    RoomRow(
+                        roomId = roomId,
+                        isApproved = amApproved,
+                        isDm = isDm,
+                        displayName = displayName,
+                        onOpen = {
+                            navController.navigate(
+                                NavRoutes.Conversation.create(roomId)
+                            )
+                        },
+                        onOpenProfile = {
+                            profileRoomId = roomId
+                        }
+                    )
+                }
             }
         }
 
-        // 🔹 Floating Speed Dial FAB
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -133,11 +158,17 @@ fun ChatListScreen(
                 Spacer(Modifier.height(8.dp))
             }
 
-            FloatingActionButton(onClick = { fabExpanded = !fabExpanded }) {
-                Text(if (fabExpanded) "×" else "+")
+            FloatingActionButton(
+                onClick = { fabExpanded = !fabExpanded },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Text(
+                    text = if (fabExpanded) "×" else "+",
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             }
         }
-        // 🔹 Show the bottom sheet when a room is selected
+
         if (profileRoomId != null) {
             RoomDetailsSheet(
                 roomId = profileRoomId!!,
@@ -145,7 +176,6 @@ fun ChatListScreen(
                 onClose = { profileRoomId = null }
             )
         }
-
     }
 }
 
@@ -168,23 +198,52 @@ private fun RoomRow(
     onOpen: () -> Unit,
     onOpenProfile: () -> Unit
 ) {
-    Row(
-        Modifier
+    Card(
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
             .clickable(
                 enabled = isApproved,
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) { onOpen() },
-        verticalAlignment = Alignment.CenterVertically
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Text(displayName)
-        Spacer(Modifier.weight(1f))
-        IconButton(onClick = onOpenProfile) {
-            Icon(Icons.Default.Info, contentDescription = "Room profile")
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                Text(
+                    text = if (isApproved) "Tap to open" else "Waiting for approval",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isApproved)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.error
+                )
+            }
+
+            IconButton(onClick = onOpenProfile) {
+                Icon(
+                    Icons.Default.Info,
+                    contentDescription = "Room profile",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
-        Text(if (isApproved) "✅" else "⏳")
     }
 }
-

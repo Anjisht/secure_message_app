@@ -8,6 +8,7 @@ const s3 = new AWS.S3({
   accessKeyId: process.env.DO_SPACES_KEY,
   secretAccessKey: process.env.DO_SPACES_SECRET,
   signatureVersion: 'v4', // required for presigned URLs
+  region: "sgp1", 
 });
 
 module.exports = s3;

@@ -12,7 +12,7 @@ exports.getUploadUrl = async (req, res) => {
       Bucket: process.env.DO_SPACES_BUCKET, // e.g. "baatcheet"
       Key: fileKey,
       ContentType: contentType,
-      ACL: 'private', // keep encrypted files private
+      // ACL: 'private', // keep encrypted files private
     };
 
     const uploadUrl = await s3.getSignedUrlPromise('putObject', {

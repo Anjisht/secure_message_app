@@ -44,7 +44,7 @@ fun BaatCheetTheme(
         }
 
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = LightColors,
         typography = Typography,
         content = content
     )

@@ -31,17 +31,17 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://baatcheet-backend-jrndg.ondigitalocean.app/\""
+                "\"https://ij.dophera.xyz/\""
             )
             buildConfigField(
                 "String",
                 "API_BASE_URL",
-                "\"https://baatcheet-backend-jrndg.ondigitalocean.app/api/\""
+                "\"https://ij.dophera.xyz/api/\""
             )
             buildConfigField(
                 "String",
                 "SOCKET_BASE_URL",
-                "\"https://baatcheet-backend-jrndg.ondigitalocean.app\""
+                "\"https://ij.dophera.xyz\""
             )
         }
 

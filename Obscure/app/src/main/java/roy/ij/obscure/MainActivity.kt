@@ -37,11 +37,14 @@ import roy.ij.obscure.features.dm.ScanOrTypeScreen
 import roy.ij.obscure.navigation.NavRoutes
 import roy.ij.obscure.security.SecureStore
 import roy.ij.obscure.ui.theme.BaatCheetTheme
+import androidx.appcompat.app.AppCompatDelegate
 
 class MainActivity : FragmentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
 
         setContent {
             BaatCheetTheme {

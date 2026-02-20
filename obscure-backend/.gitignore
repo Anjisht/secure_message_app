@@ -1,0 +1,6 @@
+.env
+/node_modules
+config/serviceAccountKey.base64
+/node_modules
+/node_modules
+node_modules/.package-lock.json

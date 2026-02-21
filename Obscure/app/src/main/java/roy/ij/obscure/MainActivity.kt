@@ -40,6 +40,7 @@ import roy.ij.obscure.ui.theme.BaatCheetTheme
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import roy.ij.obscure.security.panicGesture
 
 class MainActivity : FragmentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -73,7 +74,7 @@ class MainActivity : FragmentActivity() {
                 // if app opened from notification
                 val startRoomId = intent?.getStringExtra("roomId")
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
+                Scaffold(modifier = Modifier.fillMaxSize().panicGesture()) { padding ->
                         NavHost(navController, startDestination) {
                             composable(NavRoutes.Auth.route) {
                                 // Pass the same VM to keep state across recompositions

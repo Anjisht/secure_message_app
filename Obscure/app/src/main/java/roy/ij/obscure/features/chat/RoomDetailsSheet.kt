@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import roy.ij.obscure.analytics.AnalyticsTracker
 import roy.ij.obscure.features.chat.RoomViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,8 +32,14 @@ fun RoomDetailsSheet(
                         Text("Alias: ${m.alias}")
                         if (!m.joinNote.isNullOrBlank()) Text("Note: ${m.joinNote}")
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Button(onClick = { vm.approve(r.roomId, m.userId) }) { Text("Approve") }
-                            OutlinedButton(onClick = { vm.deny(r.roomId, m.userId) }) { Text("Deny") }
+                            Button(onClick = {
+                                AnalyticsTracker.action("member_approve_tap", mapOf("feature" to "room"))
+                                vm.approve(r.roomId, m.userId)
+                            }) { Text("Approve") }
+                            OutlinedButton(onClick = {
+                                AnalyticsTracker.action("member_deny_tap", mapOf("feature" to "room"))
+                                vm.deny(r.roomId, m.userId)
+                            }) { Text("Deny") }
                         }
                     }
                     Divider()

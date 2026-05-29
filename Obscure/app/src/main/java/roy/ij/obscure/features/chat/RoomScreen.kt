@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import roy.ij.obscure.analytics.AnalyticsTracker
 import roy.ij.obscure.navigation.NavRoutes
 
 // Brand colors
@@ -176,6 +177,7 @@ fun RoomScreen(
 
                         Button(
                             onClick = {
+                                AnalyticsTracker.action("room_create_attempt", mapOf("feature" to "room"))
                                 Log.d(
                                     "RoomScreen",
                                     "Creating room with code=$code duration=$duration"
@@ -233,6 +235,7 @@ fun RoomScreen(
 
                         Button(
                             onClick = {
+                                AnalyticsTracker.action("room_join_attempt", mapOf("feature" to "room"))
                                 Log.d("RoomScreen", "Joining room=$roomId joinCode=$joinCode")
                                 viewModel.joinRoom(
                                     roomId.trim(),
@@ -271,11 +274,15 @@ fun RoomScreen(
     }
     LaunchedEffect(state.roomId) {
         state.roomId?.let { id ->
+            AnalyticsTracker.action("room_join_success", mapOf("feature" to "room"))
             navController.navigate(NavRoutes.Conversation.create(id)) {
                 popUpTo(NavRoutes.Room.route) { inclusive = true }
                 launchSingleTop = true
             }
         }
+    }
+    LaunchedEffect(state.error) {
+        state.error?.let { AnalyticsTracker.failure("room_action", it) }
     }
 }
 

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.*
+import roy.ij.obscure.analytics.AnalyticsTracker
 import roy.ij.obscure.navigation.NavRoutes
 import roy.ij.obscure.security.*
 import roy.ij.obscure.ui.components.FancyTextField
@@ -69,6 +70,7 @@ fun LockScreen(
         if (!showPasswordSheet && !blob.isNullOrBlank()) {
             promptToDecryptAndUnlock(activity, blob) { tokenOrNull ->
                 if (tokenOrNull != null) {
+                    AnalyticsTracker.action("biometric_unlock_result", mapOf("result" to "success"))
                     // Set token into VM and go
                     viewModel.restoreSession(tokenOrNull)
                     navController.navigate(NavRoutes.ChatList.route) {
@@ -76,6 +78,7 @@ fun LockScreen(
                         launchSingleTop = true
                     }
                 } else {
+                    AnalyticsTracker.action("biometric_unlock_result", mapOf("result" to "failed"))
                     // Stay here; user can tap "Use password"
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                 }
@@ -86,6 +89,7 @@ fun LockScreen(
     // React to VM errors from password fallback
     LaunchedEffect(state.error) {
         state.error?.let { msg ->
+            AnalyticsTracker.failure("password_unlock", msg)
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             snackbarHostState.showSnackbar(
                 when {
@@ -171,12 +175,14 @@ fun LockScreen(
                             } else {
                                 promptToDecryptAndUnlock(activity, blob) { tokenOrNull ->
                                     if (tokenOrNull != null) {
+                                        AnalyticsTracker.action("biometric_unlock_result", mapOf("result" to "success"))
                                         viewModel.restoreSession(tokenOrNull)
                                         navController.navigate(NavRoutes.ChatList.route) {
                                             popUpTo(NavRoutes.Lock.route) { inclusive = true }
                                             launchSingleTop = true
                                         }
                                     } else {
+                                        AnalyticsTracker.action("biometric_unlock_result", mapOf("result" to "failed"))
                                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                                     }
                                 }
@@ -265,6 +271,7 @@ fun LockScreen(
                                 return@Button
                             }
                             // Re-login inline (no nav)
+                            AnalyticsTracker.action("password_unlock_attempt", mapOf("feature" to "auth"))
                             viewModel.login(ctx, username, password)
                         },
                         enabled = password.length >= 10,

@@ -7,3 +7,4 @@ obscure-backend/config/serviceAccountKey.base64
 obscure-backend/config/*service*account*.json
 Obscure/app/release/app-release.aab
 Obscure/app/release/output-metadata.json
+Obscure/app/google-services.json

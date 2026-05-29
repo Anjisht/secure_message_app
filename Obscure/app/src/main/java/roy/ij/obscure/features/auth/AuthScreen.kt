@@ -35,6 +35,7 @@ import roy.ij.obscure.features.auth.AuthViewModel
 import roy.ij.obscure.ui.components.FancyTextField
 import androidx.compose.ui.unit.IntOffset
 import androidx.fragment.app.FragmentActivity
+import roy.ij.obscure.analytics.AnalyticsTracker
 import roy.ij.obscure.navigation.NavRoutes
 import roy.ij.obscure.security.SecureStore
 import roy.ij.obscure.security.promptToEncryptAndStore
@@ -103,8 +104,10 @@ fun AuthScreen(
 
                     promptToEncryptAndStore(activity, token) { success ->
                         if (success) {
+                            AnalyticsTracker.action("biometric_setup_result", mapOf("result" to "enabled"))
                             println("✅ Biometric lock enabled and token securely stored.")
                         } else {
+                            AnalyticsTracker.action("biometric_setup_result", mapOf("result" to "skipped"))
                             println("❌ User skipped biometric setup.")
                             // clear any leftover blob to avoid confusion
                             SecureStore.clearAll(context)
@@ -184,8 +187,13 @@ fun AuthScreen(
 
                         Button(
                             onClick = {
-                                if (isLogin) viewModel.login(context, username, password)
-                                else viewModel.register(context, username, password)
+                                if (isLogin) {
+                                    AnalyticsTracker.action("login_attempt", mapOf("feature" to "auth"))
+                                    viewModel.login(context, username, password)
+                                } else {
+                                    AnalyticsTracker.action("register_attempt", mapOf("feature" to "auth"))
+                                    viewModel.register(context, username, password)
+                                }
                             },
                             enabled = username.isNotBlank() && password.length >= 10,
                             modifier = Modifier
@@ -226,6 +234,10 @@ fun AuthScreen(
 
                         LaunchedEffect(state.error) {
                             state.error?.let { backendError ->
+                                AnalyticsTracker.failure(
+                                    if (isLogin) "login" else "register",
+                                    backendError
+                                )
                                 // 🧠 Map backend error -> user friendly message
                                 val userMessage = when {
                                     backendError.contains("username & password required", true) -> "Please enter both username and password."

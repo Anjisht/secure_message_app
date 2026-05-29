@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import roy.ij.obscure.analytics.AnalyticsTracker
 import roy.ij.obscure.data.network.ApiService
 import roy.ij.obscure.data.network.DmStartReq
 import roy.ij.obscure.data.network.RetrofitClient
@@ -77,17 +78,32 @@ fun ScanOrTypeScreen(
         val uid = targetUserId?.trim()?.ifBlank { null }
 
         if (uid == null && uname == null) {
+            AnalyticsTracker.failure("start_dm", "missing_target")
             error = "Enter a username or scan a valid QR."
             return
         }
 
+        AnalyticsTracker.action(
+            "start_dm_attempt",
+            mapOf(
+                "feature" to "connect",
+                "entry_method" to if (uid == null) "typed" else "qr"
+            )
+        )
         loading = true
         scope.launch {
             val result = startDmSafe(api, token, uid, uname)
             loading = false
             result.fold(
-                onSuccess = { roomId -> onSuccess(roomId) },
-                onFailure = { e -> error = e.message ?: "Failed to start chat" }
+                onSuccess = { roomId ->
+                    AnalyticsTracker.action("start_dm_success", mapOf("feature" to "connect"))
+                    onSuccess(roomId)
+                },
+                onFailure = { e ->
+                    AnalyticsTracker.failure("start_dm", e.message ?: "failed")
+                    AnalyticsTracker.recordHandledException(e, "connect")
+                    error = e.message ?: "Failed to start chat"
+                }
             )
         }
     }
@@ -107,9 +123,13 @@ fun ScanOrTypeScreen(
             when {
                 !userId.isNullOrBlank() -> launchStartDm(targetUserId = userId, targetUsername = null)
                 !uname.isNullOrBlank() -> launchStartDm(targetUserId = null, targetUsername = uname)
-                else -> error = "Invalid QR payload"
+                else -> {
+                    AnalyticsTracker.failure("scan_qr", "invalid_payload")
+                    error = "Invalid QR payload"
+                }
             }
         } catch (_: Exception) {
+            AnalyticsTracker.failure("scan_qr", "invalid_json")
             error = "Invalid QR"
         }
     }
@@ -206,7 +226,10 @@ fun ScanOrTypeScreen(
                         )
 
                         Button(
-                            onClick = { launchStartDm(targetUserId = null, targetUsername = username) },
+                            onClick = {
+                                AnalyticsTracker.action("type_username_tap", mapOf("feature" to "connect"))
+                                launchStartDm(targetUserId = null, targetUsername = username)
+                            },
                             enabled = username.trim().isNotEmpty() && !loading,
                             shape = RoundedCornerShape(16.dp),
                             modifier = Modifier
@@ -271,7 +294,9 @@ fun ScanOrTypeScreen(
 
                         Button(
                             onClick = {
+                                AnalyticsTracker.action("scan_qr_tap", mapOf("feature" to "connect"))
                                 if (activity == null) {
+                                    AnalyticsTracker.failure("scan_qr", "activity_unavailable")
                                     Toast.makeText(context, "Activity not available", Toast.LENGTH_SHORT).show()
                                     return@Button
                                 }

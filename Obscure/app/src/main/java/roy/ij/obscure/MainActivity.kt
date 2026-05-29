@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import roy.ij.obscure.features.auth.AuthScreen
@@ -37,6 +42,8 @@ import roy.ij.obscure.features.dm.MyProfileQrScreen
 import roy.ij.obscure.features.dm.MyProfileQrViewModel
 import roy.ij.obscure.features.dm.ScanOrTypeScreen
 import roy.ij.obscure.navigation.NavRoutes
+import roy.ij.obscure.analytics.AnalyticsConsent
+import roy.ij.obscure.analytics.AnalyticsTracker
 import roy.ij.obscure.security.SecureStore
 import roy.ij.obscure.ui.theme.BaatCheetTheme
 import androidx.appcompat.app.AppCompatDelegate
@@ -56,11 +63,15 @@ class MainActivity : FragmentActivity() {
         setContent {
             BaatCheetTheme {
                 val navController = rememberNavController()
+                val backStackEntry by navController.currentBackStackEntryAsState()
 
                 val ctx = this
                 val storedUsername = remember { SecureStore.getUsername(ctx) }
                 val hasBlob = remember { !SecureStore.getTokenBlob(ctx).isNullOrBlank() }
                 val bioEnabled = remember { SecureStore.isBiometricEnabled(ctx) }
+                var showAnalyticsConsent by remember {
+                    mutableStateOf(!AnalyticsConsent.hasChoice(ctx))
+                }
 
                 val startDestination = remember(storedUsername, hasBlob, bioEnabled) {
                     when {
@@ -143,10 +154,60 @@ class MainActivity : FragmentActivity() {
                     // 🔗 Deep-link navigation when opened from notification
                     LaunchedEffect(authState.token, startRoomId) {
                         if (authState.token != null && !startRoomId.isNullOrBlank()) {
+                            AnalyticsTracker.action("notification_open", mapOf("feature" to "chat"))
                             navController.navigate(NavRoutes.Conversation.create(startRoomId)) {
                                 launchSingleTop = true
                             }
                         }
+                    }
+
+                    LaunchedEffect(backStackEntry?.destination?.route) {
+                        val screenName = when (backStackEntry?.destination?.route) {
+                            NavRoutes.Auth.route -> "auth"
+                            NavRoutes.ChatList.route -> "chat_list"
+                            NavRoutes.Room.route -> "room_list"
+                            NavRoutes.Conversation.route -> "conversation"
+                            NavRoutes.MyQr.route -> "profile_qr"
+                            NavRoutes.ScanOrType.route -> "scan_type"
+                            NavRoutes.Lock.route -> "lock"
+                            else -> null
+                        }
+                        screenName?.let(AnalyticsTracker::screen)
+                    }
+
+                    if (showAnalyticsConsent) {
+                        AlertDialog(
+                            onDismissRequest = {},
+                            title = { Text("Help improve Obscure") },
+                            text = {
+                                Text(
+                                    "Share anonymous crash reports and privacy-safe feature usage. Obscure will not send usernames, room IDs, messages, QR contents, tokens, or typed input."
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        AnalyticsConsent.setEnabled(ctx, true)
+                                        AnalyticsTracker.setConsent(true)
+                                        AnalyticsTracker.action("analytics_consent_accept")
+                                        showAnalyticsConsent = false
+                                    }
+                                ) {
+                                    Text("Allow")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = {
+                                        AnalyticsConsent.setEnabled(ctx, false)
+                                        AnalyticsTracker.setConsent(false)
+                                        showAnalyticsConsent = false
+                                    }
+                                ) {
+                                    Text("Not now")
+                                }
+                            }
+                        )
                     }
                 }
             }

@@ -10,6 +10,7 @@ plugins {
     id("com.google.gms.google-services")
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.firebase.crashlytics)
 
     id("com.google.dagger.hilt.android") version "2.51"
     kotlin("kapt") // ONLY for Hilt
@@ -69,8 +70,8 @@ android {
         applicationId = "roy.ij.obscure"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.1.2"
+        versionCode = 7
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -195,6 +196,8 @@ dependencies {
 
     // Import the Firebase BoM
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.google.firebase.messaging.ktx)
 
     val roomVersion = "2.6.1"

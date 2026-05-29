@@ -36,6 +36,7 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import org.json.JSONObject
+import roy.ij.obscure.analytics.AnalyticsTracker
 
 private val BrandGreen = Color(0xFF05C655)     // #05c655
 private val BrandPeriwinkle = Color(0xFF91A6E1) // #91a6e1
@@ -92,14 +93,20 @@ fun MyProfileQrScreen(
                     },
                     navigationIcon = {
                         if (onBack != null) {
-                            IconButton(onClick = onBack) {
+                            IconButton(onClick = {
+                                AnalyticsTracker.action("profile_qr_back_tap", mapOf("feature" to "connect"))
+                                onBack()
+                            }) {
                                 Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                             }
                         }
                     },
                     actions = {
                         IconButton(
-                            onClick = { shareText(context, payload) }
+                            onClick = {
+                                AnalyticsTracker.action("profile_qr_share_tap", mapOf("feature" to "connect"))
+                                shareText(context, payload)
+                            }
                         ) {
                             Icon(Icons.Default.IosShare, contentDescription = "Share")
                         }
@@ -237,6 +244,7 @@ fun MyProfileQrScreen(
                         ) {
                             OutlinedButton(
                                 onClick = {
+                                    AnalyticsTracker.action("profile_username_copy_tap", mapOf("feature" to "connect"))
                                     clipboard.setText(AnnotatedString(username))
                                     Toast.makeText(context, "Username copied", Toast.LENGTH_SHORT).show()
                                 },
@@ -252,7 +260,10 @@ fun MyProfileQrScreen(
                             }
 
                             Button(
-                                onClick = { shareText(context, payload) },
+                                onClick = {
+                                    AnalyticsTracker.action("profile_qr_share_tap", mapOf("feature" to "connect"))
+                                    shareText(context, payload)
+                                },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(

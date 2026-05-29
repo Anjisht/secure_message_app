@@ -23,6 +23,7 @@ import androidx.core.content.ContextCompat
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
+import roy.ij.obscure.analytics.AnalyticsTracker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -182,11 +183,19 @@ fun ChatListScreen(
                             isDm = isDm,
                             displayName = displayName,
                             onOpen = {
+                                AnalyticsTracker.action(
+                                    "chat_open_tap",
+                                    mapOf(
+                                        "feature" to "chat",
+                                        "room_type" to if (isDm) "dm" else "room"
+                                    )
+                                )
                                 navController.navigate(
                                     NavRoutes.Conversation.create(roomId)
                                 )
                             },
                             onOpenProfile = {
+                                AnalyticsTracker.action("room_profile_open", mapOf("feature" to "chat"))
                                 profileRoomId = roomId
                             }
                         )
@@ -203,18 +212,21 @@ fun ChatListScreen(
                 if (fabExpanded) {
                     SmallFab("Show My QR") {
                         fabExpanded = false
+                        AnalyticsTracker.action("profile_qr_open_tap", mapOf("feature" to "connect"))
                         navController.navigate(NavRoutes.MyQr.route)
                     }
                     Spacer(Modifier.height(8.dp))
 
                     SmallFab("Scan / Type Username") {
                         fabExpanded = false
+                        AnalyticsTracker.action("scan_type_open_tap", mapOf("feature" to "connect"))
                         navController.navigate(NavRoutes.ScanOrType.route)
                     }
                     Spacer(Modifier.height(8.dp))
 
                     SmallFab("Create / Join Room") {
                         fabExpanded = false
+                        AnalyticsTracker.action("room_create_join_open_tap", mapOf("feature" to "room"))
                         navController.navigate(NavRoutes.Room.route)
                     }
                     Spacer(Modifier.height(8.dp))
@@ -227,7 +239,10 @@ fun ChatListScreen(
                 }
 
                 FloatingActionButton(
-                    onClick = { fabExpanded = !fabExpanded },
+                    onClick = {
+                        AnalyticsTracker.action("connect_menu_toggle", mapOf("feature" to "connect"))
+                        fabExpanded = !fabExpanded
+                    },
                     containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     Text(

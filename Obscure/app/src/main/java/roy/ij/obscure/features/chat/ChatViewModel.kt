@@ -22,6 +22,7 @@ import roy.ij.obscure.data.network.ApiService
 import roy.ij.obscure.data.network.UploadUrlReq
 import javax.crypto.SecretKey
 import java.time.Instant
+import roy.ij.obscure.analytics.AnalyticsTracker
 
 enum class MsgType { TEXT, MEDIA }
 enum class MessageStatus { SENDING, SENT, FAILED }
@@ -184,6 +185,7 @@ class ChatViewModel(
                                         )
                                     }
                                 } catch (e: Exception) {
+                                    AnalyticsTracker.recordHandledException(e, "chat")
                                     e.printStackTrace()
                                     withContext(Dispatchers.Main) {
                                         appendMessage(ChatMessage(null, "System", "⚠️ media decrypt failed", false, System.currentTimeMillis()))
@@ -200,6 +202,7 @@ class ChatViewModel(
                             appendMessage(ChatMessage(id, alias, text, mine = false, at = at))
                         }
                     } catch (e: Exception) {
+                        AnalyticsTracker.recordHandledException(e, "chat")
                         e.printStackTrace()
                         appendMessage(ChatMessage(null, "System", "⚠️ failed to decrypt message", false, System.currentTimeMillis()))
                     }
@@ -213,6 +216,7 @@ class ChatViewModel(
 
                 _state.update { it.copy(loading = false, myUserId = myUserId, members = members) }
             } catch (e: Exception) {
+                AnalyticsTracker.recordHandledException(e, "chat")
                 _state.update { it.copy(loading = false, error = e.message ?: "init failed") }
             }
         }
@@ -266,6 +270,10 @@ class ChatViewModel(
 
                 val ack = sendSocketMessage(payload)
                 if (ack?.optBoolean("ok", false) == true) {
+                    AnalyticsTracker.action(
+                        "send_message_success",
+                        mapOf("feature" to "chat", "message_type" to "text")
+                    )
                     updateMessage(localId) { current ->
                         current.copy(
                             id = ack.optString("id").takeIf { it.isNotBlank() } ?: current.id,
@@ -274,11 +282,14 @@ class ChatViewModel(
                         )
                     }
                 } else {
+                    AnalyticsTracker.failure("send_message", "socket_ack_failed")
                     updateMessage(localId) { current ->
                         current.copy(status = MessageStatus.FAILED)
                     }
                 }
             } catch (e: Exception) {
+                AnalyticsTracker.failure("send_message", e.message ?: "exception")
+                AnalyticsTracker.recordHandledException(e, "chat")
                 e.printStackTrace()
                 appendMessage(ChatMessage(null, "System", "❌ send failed: ${e.message}", true, System.currentTimeMillis()))
             }
@@ -378,12 +389,14 @@ class ChatViewModel(
                         )
                     }
                 } catch (e: Exception) {
+                    AnalyticsTracker.recordHandledException(e, "chat")
                     e.printStackTrace()
                     null
                 }
             }
             _state.update { it.copy(messages = msgs.sortedBy { it.at }) }
         } catch (e: Exception) {
+            AnalyticsTracker.recordHandledException(e, "chat")
             e.printStackTrace()
             appendMessage(ChatMessage(null, "System", "⚠️ failed to load history", false, System.currentTimeMillis()))
         }
@@ -455,6 +468,10 @@ class ChatViewModel(
                 )
                 val ack = sendSocketMessage(payload)
                 if (ack?.optBoolean("ok", false) == true) {
+                    AnalyticsTracker.action(
+                        "send_message_success",
+                        mapOf("feature" to "chat", "message_type" to "media")
+                    )
                     updateMessage(localId) { current ->
                         current.copy(
                             id = ack.optString("id").takeIf { it.isNotBlank() } ?: current.id,
@@ -463,6 +480,7 @@ class ChatViewModel(
                         )
                     }
                 } else {
+                    AnalyticsTracker.failure("send_message", "media_socket_ack_failed")
                     updateMessage(localId) { current ->
                         current.copy(status = MessageStatus.FAILED)
                     }
@@ -470,6 +488,8 @@ class ChatViewModel(
 
 
             } catch (e: Exception) {
+                AnalyticsTracker.failure("send_message", e.message ?: "exception")
+                AnalyticsTracker.recordHandledException(e, "chat")
                 e.printStackTrace()
                 updateMessage(localId) { current ->
                     current.copy(status = MessageStatus.FAILED)

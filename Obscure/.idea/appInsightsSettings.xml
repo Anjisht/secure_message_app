@@ -23,9 +23,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="roy.ij.obscure" />
-                  <option name="mobileSdkAppId" value="1:365846685425:android:b8357401df571324c46b50" />
-                  <option name="projectId" value="baat-cheet37" />
-                  <option name="projectNumber" value="365846685425" />
+                  <option name="mobileSdkAppId" value="1:1059771476489:android:187502e8dba4f7d13566d8" />
+                  <option name="projectId" value="obscure-b1613" />
+                  <option name="projectNumber" value="1059771476489" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

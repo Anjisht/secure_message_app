@@ -82,6 +82,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
+import roy.ij.obscure.analytics.AnalyticsTracker
 import roy.ij.obscure.util.CurrentChat
 import java.io.File
 
@@ -131,7 +132,13 @@ fun ConversationRoute(viewModel: ChatViewModel) {
     val pickFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
-        uri?.let(viewModel::sendMedia)
+        uri?.let {
+            AnalyticsTracker.action(
+                "send_message_attempt",
+                mapOf("feature" to "chat", "message_type" to "media")
+            )
+            viewModel.sendMedia(it)
+        }
     }
 
     ConversationContent(
@@ -141,11 +148,18 @@ fun ConversationRoute(viewModel: ChatViewModel) {
         onSend = {
             val message = input.trim()
             if (message.isNotEmpty()) {
+                AnalyticsTracker.action(
+                    "send_message_attempt",
+                    mapOf("feature" to "chat", "message_type" to "text")
+                )
                 viewModel.send(message)
                 input = ""
             }
         },
-        onAttach = { pickFileLauncher.launch("*/*") }
+        onAttach = {
+            AnalyticsTracker.action("attach_media_tap", mapOf("feature" to "chat"))
+            pickFileLauncher.launch("*/*")
+        }
     )
 }
 

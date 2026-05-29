@@ -1,4 +1,7 @@
 import java.util.Properties
+import org.gradle.api.GradleException
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.bundling.Zip
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,6 +22,45 @@ val keystoreProperties = Properties().apply {
     }
 }
 
+val releaseNativeDebugSymbolsZip by tasks.registering(Zip::class) {
+    group = "build"
+    description = "Packages release native libraries into a Play Console upload zip."
+
+    val extractedNativeSymbolTablesDir =
+        layout.buildDirectory.dir("intermediates/native_symbol_tables/release/extractReleaseNativeSymbolTables/out")
+    val mergedNativeLibsDir =
+        layout.buildDirectory.dir("intermediates/merged_native_libs/release/mergeReleaseNativeLibs/out/lib")
+
+    val zipSourceDir = providers.provider {
+        val extractedDir = extractedNativeSymbolTablesDir.get().asFile
+        if (extractedDir.exists() && extractedDir.walkTopDown().any { it.isFile }) {
+            extractedDir
+        } else {
+            mergedNativeLibsDir.get().asFile
+        }
+    }
+
+    dependsOn("mergeReleaseNativeLibs", "extractReleaseNativeSymbolTables")
+    archiveFileName.set("native-debug-symbols.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("outputs/native-debug-symbols/release"))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+    includeEmptyDirs = false
+    from(zipSourceDir)
+
+    doFirst {
+        val sourceDir = zipSourceDir.get()
+        if (!sourceDir.exists() || sourceDir.walkTopDown().none { it.isFile }) {
+            throw GradleException("No release native libraries were found to package into native-debug-symbols.zip.")
+        }
+    }
+}
+
+tasks.matching { it.name in setOf("assembleRelease", "bundleRelease") }.configureEach {
+    dependsOn(releaseNativeDebugSymbolsZip)
+}
+
 android {
     namespace = "roy.ij.obscure"
     compileSdk = 36
@@ -27,8 +69,8 @@ android {
         applicationId = "roy.ij.obscure"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.1.1"
+        versionCode = 6
+        versionName = "1.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,6 +89,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            ndk {
+                debugSymbolLevel = "symbol_table"
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

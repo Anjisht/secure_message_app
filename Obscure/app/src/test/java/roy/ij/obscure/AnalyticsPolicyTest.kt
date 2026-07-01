@@ -19,6 +19,7 @@ class AnalyticsPolicyTest {
         assertTrue(versions.contains("firebase-crashlytics"))
         assertTrue(manifest.contains("firebase_analytics_collection_enabled"))
         assertTrue(manifest.contains("firebase_crashlytics_collection_enabled"))
+        assertTrue(manifest.contains("com.google.android.gms.permission.AD_ID"))
     }
 
     @Test

@@ -5,8 +5,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import net.sqlcipher.database.SQLiteDatabase
-import net.sqlcipher.database.SupportFactory
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 @Database(entities = [ChatEntity::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
@@ -23,8 +22,9 @@ abstract class AppDatabase : RoomDatabase() {
                 val securityManager = SecurityManager(context)
                 val passphrase = securityManager.getDatabasePassphrase()
 
-                // 2. Use the passphrase to create the factory
-                val factory = SupportFactory(passphrase)
+                // 2. Load SQLCipher and use the passphrase to create the factory
+                System.loadLibrary("sqlcipher")
+                val factory = SupportOpenHelperFactory(passphrase)
 
                 // 3. Build the database
                 val instance = Room.databaseBuilder(

@@ -1,6 +1,7 @@
 [versions]
 agp = "8.9.1"
-androidDatabaseSqlcipher = "4.5.4"
+sqlcipherAndroid = "4.16.0"
+androidxSqlite = "2.6.2"
 converterGson = "3.0.0"
 firebaseBom = "32.8.1"
 firebaseCrashlyticsGradle = "3.0.6"
@@ -25,7 +26,8 @@ lifecycleProcess = "2.10.0"
 roomCommonJvm = "2.8.4"
 
 [libraries]
-android-database-sqlcipher = { module = "net.zetetic:android-database-sqlcipher", version.ref = "androidDatabaseSqlcipher" }
+sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipherAndroid" }
+androidx-sqlite = { module = "androidx.sqlite:sqlite", version.ref = "androidxSqlite" }
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
